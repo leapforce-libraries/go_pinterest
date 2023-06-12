@@ -1,12 +1,16 @@
 package pinterest
 
 import (
+	"encoding/base64"
 	"fmt"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
 	oauth2 "github.com/leapforce-libraries/go_oauth2"
 	"github.com/leapforce-libraries/go_oauth2/tokensource"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -20,6 +24,7 @@ const (
 
 type Service struct {
 	clientId      string
+	clientSecret  string
 	oAuth2Service *oauth2.Service
 	redirectUrl   *string
 	errorResponse *ErrorResponse
@@ -30,6 +35,39 @@ type ServiceConfig struct {
 	ClientSecret string
 	TokenSource  tokensource.TokenSource
 	RedirectUrl  *string
+}
+
+func (service *Service) getTokenRequest(r *http.Request) (*http.Request, *errortools.Error) {
+	err := r.ParseForm()
+	if err != nil {
+		return nil, errortools.ErrorMessage(err)
+	}
+	code := r.FormValue("code")
+
+	data := url.Values{}
+	//data.Set(service.clientIdName, service.clientId)
+	//data.Set("client_secret", service.clientSecret)
+	data.Set("code", code)
+	data.Set("grant_type", "authorization_code")
+	if service.redirectUrl != nil {
+		data.Set("redirect_uri", *service.redirectUrl)
+	}
+
+	encoded := data.Encode()
+	body := strings.NewReader(encoded)
+
+	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", service.clientId, service.clientSecret)))
+
+	req, err := http.NewRequest(http.MethodPost, tokenUrl, body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", auth))
+	if err != nil {
+		return nil, errortools.ErrorMessage(err)
+	}
+
+	return req, nil
 }
 
 func NewService(cfg *ServiceConfig) (*Service, *errortools.Error) {
@@ -46,25 +84,32 @@ func NewService(cfg *ServiceConfig) (*Service, *errortools.Error) {
 		redirectUrl = *cfg.RedirectUrl
 	}
 
+	var service = Service{
+		clientId:     cfg.ClientId,
+		clientSecret: cfg.ClientSecret,
+		redirectUrl:  cfg.RedirectUrl,
+	}
+
+	var getTokenRequestFunc = service.getTokenRequest
+
 	oauth2ServiceConfig := oauth2.ServiceConfig{
-		ClientId:        cfg.ClientId,
-		ClientSecret:    cfg.ClientSecret,
-		RedirectUrl:     redirectUrl,
-		AuthUrl:         authUrl,
-		TokenUrl:        tokenUrl,
-		TokenHttpMethod: tokenHttpMethod,
-		TokenSource:     cfg.TokenSource,
+		ClientId:                cfg.ClientId,
+		ClientSecret:            cfg.ClientSecret,
+		RedirectUrl:             redirectUrl,
+		AuthUrl:                 authUrl,
+		TokenUrl:                tokenUrl,
+		TokenHttpMethod:         tokenHttpMethod,
+		TokenSource:             cfg.TokenSource,
+		GetTokenFromRequestFunc: &getTokenRequestFunc,
 	}
 	oauth2Service, e := oauth2.NewService(&oauth2ServiceConfig)
 	if e != nil {
 		return nil, e
 	}
 
-	return &Service{
-		clientId:      cfg.ClientId,
-		oAuth2Service: oauth2Service,
-		redirectUrl:   cfg.RedirectUrl,
-	}, nil
+	service.oAuth2Service = oauth2Service
+
+	return &service, nil
 }
 
 func (service *Service) httpRequest(requestConfig *go_http.RequestConfig) (*http.Request, *http.Response, *errortools.Error) {
