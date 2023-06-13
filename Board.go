@@ -4,34 +4,29 @@ import (
 	"fmt"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
+	"github.com/leapforce-libraries/go_pinterest/types"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 type Board struct {
-	Id                  string     `json:"id"`
-	CreatedAt           time.Time  `json:"created_at"`
-	BoardPinsModifiedAt time.Time  `json:"board_pins_modified_at"`
-	Name                string     `json:"name"`
-	Description         string     `json:"description"`
-	CollaboratorCount   int64      `json:"collaborator_count"`
-	PinCount            int64      `json:"pin_count"`
-	FollowerCount       int64      `json:"follower_count"`
-	Media               BoardMedia `json:"media"`
-	Owner               Owner      `json:"owner"`
-	Privacy             string     `json:"privacy"`
+	Id                  string               `json:"id"`
+	CreatedAt           types.DateTimeString `json:"created_at"`
+	BoardPinsModifiedAt types.DateTimeString `json:"board_pins_modified_at"`
+	Name                string               `json:"name"`
+	Description         string               `json:"description"`
+	CollaboratorCount   int64                `json:"collaborator_count"`
+	PinCount            int64                `json:"pin_count"`
+	FollowerCount       int64                `json:"follower_count"`
+	Media               BoardMedia           `json:"media"`
+	Owner               Owner                `json:"owner"`
+	Privacy             string               `json:"privacy"`
 }
 
 type BoardMedia struct {
 	ImageCoverUrl    string   `json:"image_cover_url"`
 	PinThumbnailUrls []string `json:"pin_thumbnail_urls"`
 }
-
-type Owner struct {
-	Username string `json:"username"`
-}
-
 type ListBoardsConfig struct {
 	AdAccountId *string
 	PageSize    *int64

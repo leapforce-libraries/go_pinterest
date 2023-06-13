@@ -4,30 +4,30 @@ import (
 	"fmt"
 	errortools "github.com/leapforce-libraries/go_errortools"
 	go_http "github.com/leapforce-libraries/go_http"
+	"github.com/leapforce-libraries/go_pinterest/types"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type Pin struct {
-	Id              string    `json:"id"`
-	CreatedAt       time.Time `json:"created_at"`
-	Link            string    `json:"link"`
-	Title           string    `json:"title"`
-	Description     string    `json:"description"`
-	DominantColor   string    `json:"dominant_color"`
-	AltText         string    `json:"alt_text"`
-	CreativeType    string    `json:"creative_type"`
-	BoardId         string    `json:"board_id"`
-	BoardSectionId  string    `json:"board_section_id"`
-	BoardOwner      Owner     `json:"board_owner"`
-	IsOwner         bool      `json:"is_owner"`
-	Media           PinMedia  `json:"media"`
-	ParentPinId     string    `json:"parent_pin_id"`
-	IsStandard      bool      `json:"is_standard"`
-	HasBeenPromoted bool      `json:"has_been_promoted"`
-	Note            string    `json:"note"`
+	Id              string               `json:"id"`
+	CreatedAt       types.DateTimeString `json:"created_at"`
+	Link            string               `json:"link"`
+	Title           string               `json:"title"`
+	Description     string               `json:"description"`
+	DominantColor   string               `json:"dominant_color"`
+	AltText         string               `json:"alt_text"`
+	CreativeType    string               `json:"creative_type"`
+	BoardId         string               `json:"board_id"`
+	BoardSectionId  string               `json:"board_section_id"`
+	BoardOwner      Owner                `json:"board_owner"`
+	IsOwner         bool                 `json:"is_owner"`
+	Media           PinMedia             `json:"media"`
+	ParentPinId     string               `json:"parent_pin_id"`
+	IsStandard      bool                 `json:"is_standard"`
+	HasBeenPromoted bool                 `json:"has_been_promoted"`
+	Note            string               `json:"note"`
 }
 
 type PinMedia struct {
