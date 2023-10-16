@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -117,18 +118,30 @@ func (service *Service) httpRequest(requestConfig *go_http.RequestConfig) (*http
 	service.errorResponse = &ErrorResponse{}
 	requestConfig.ErrorModel = service.errorResponse
 
-	request, response, e := service.oAuth2Service.HttpRequest(requestConfig)
-	if e != nil {
-		if service.errorResponse.Message != "" {
-			e.SetMessage(service.errorResponse.Message)
+	for {
+		request, response, e := service.oAuth2Service.HttpRequest(requestConfig)
+		if response.StatusCode == http.StatusTooManyRequests {
+			reset := response.Header.Get("x-ratelimit-reset")
+			resetInt, err := strconv.ParseInt(reset, 10, 64)
+			if err == nil {
+				if resetInt < 60*60 {
+					time.Sleep(time.Duration(resetInt+1) + time.Second)
+					continue
+				}
+			}
 		}
-	}
+		if e != nil {
+			if service.errorResponse.Message != "" {
+				e.SetMessage(service.errorResponse.Message)
+			}
+		}
 
-	if e != nil {
-		return request, response, e
-	}
+		if e != nil {
+			return request, response, e
+		}
 
-	return request, response, nil
+		return request, response, nil
+	}
 }
 
 func (service *Service) AuthorizeUrl(scope string) string {
