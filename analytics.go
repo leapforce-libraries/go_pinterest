@@ -11,9 +11,7 @@ import (
 	"strings"
 )
 
-type Analytics struct {
-	data map[string]json.RawMessage
-}
+type Analytics map[string]json.RawMessage
 
 type getAnalyticsConfig struct {
 	StartDate            civil.Date
@@ -34,7 +32,7 @@ func (a *Analytics) value(key string) json.RawMessage {
 		return nil
 	}
 
-	j, ok := a.data[key]
+	j, ok := (*a)[key]
 	if !ok {
 		return nil
 	}
@@ -143,7 +141,7 @@ func (a *Analytics) Int64(key string) *int64 {
 
 func (service *Service) getAnalytics(url_ string, cfg *getAnalyticsConfig) (*[]Analytics, *errortools.Error) {
 	if cfg == nil {
-		return nil, errortools.ErrorMessage("getAnalyticsConfig must not be nil")
+		return nil, errortools.ErrorMessage("CreateAnalyticsReportConfig must not be nil")
 	}
 
 	var values = url.Values{}
@@ -173,23 +171,17 @@ func (service *Service) getAnalytics(url_ string, cfg *getAnalyticsConfig) (*[]A
 		values.Set("conversion_report_time", string(*cfg.ConversionReportTime))
 	}
 
-	var m []map[string]json.RawMessage
+	var analytics []Analytics
 
 	requestConfig := go_http.RequestConfig{
 		Method:        http.MethodGet,
 		Url:           service.url(fmt.Sprintf("%s?%s", url_, values.Encode())),
-		ResponseModel: &m,
+		ResponseModel: &analytics,
 	}
 
 	_, _, e := service.httpRequest(&requestConfig)
 	if e != nil {
 		return nil, e
-	}
-
-	var analytics []Analytics
-
-	for _, d := range m {
-		analytics = append(analytics, Analytics{data: d})
 	}
 
 	return &analytics, nil
