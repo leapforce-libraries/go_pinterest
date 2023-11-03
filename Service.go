@@ -120,13 +120,15 @@ func (service *Service) httpRequest(requestConfig *go_http.RequestConfig) (*http
 
 	for {
 		request, response, e := service.oAuth2Service.HttpRequest(requestConfig)
-		if response.StatusCode == http.StatusTooManyRequests {
-			reset := response.Header.Get("x-ratelimit-reset")
-			resetInt, err := strconv.ParseInt(reset, 10, 64)
-			if err == nil {
-				if resetInt < 60*60 {
-					time.Sleep(time.Duration(resetInt+1) + time.Second)
-					continue
+		if response != nil {
+			if response.StatusCode == http.StatusTooManyRequests {
+				reset := response.Header.Get("x-ratelimit-reset")
+				resetInt, err := strconv.ParseInt(reset, 10, 64)
+				if err == nil {
+					if resetInt < 60*60 {
+						time.Sleep(time.Duration(resetInt+1) + time.Second)
+						continue
+					}
 				}
 			}
 		}
